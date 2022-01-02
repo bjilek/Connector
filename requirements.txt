@@ -1,0 +1,5 @@
+flask
+Pillow
+pystray
+waitress
+win32; sys_platform == 'win32'

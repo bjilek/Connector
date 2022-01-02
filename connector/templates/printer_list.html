@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="column content">
+        <div class="columns m-0 is-desktop">
+            <div class="column">
+                <div class="container box is-fluid p-2">
+                    <table id="main-content-list" class="table is-narrow is-hoverable is-fullwidth">
+                        <tr>
+                            <th>Available Printer</th>
+                        </tr>
+                        {% for printer in printer_list %}
+                            <tr>
+                                <td>{{ printer }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

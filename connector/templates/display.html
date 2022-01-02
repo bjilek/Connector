@@ -1,0 +1,47 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="{{url_for('static', filename='js/display.js')}}" defer type="text/javascript"></script>
+
+    {% if default_stylesheet %}
+        {{ default_stylesheet|escape }}
+    {% else %}
+        <link rel="stylesheet"  type="text/css" href="{{url_for('static', filename='css/bulma.min.css')}}">
+    {% endif %}
+
+    {% if stylesheet %}
+        {{ stylesheet|escape }}
+    {% endif %}
+
+    {% if script %}
+        {{ script|escape }}
+    {% endif %}
+
+    {% if favicon %}
+        {{ favicon|escape }}
+    {% else %}
+        <link rel="shortcut icon" type="image/png" href="{{url_for('static', filename='icons/connector.svg')}}"/>
+    {% endif %}
+
+
+    <title>
+        {% if title %}
+            {{ title }}
+        {% else %}
+            Connector Display
+        {% endif %}
+    </title>
+
+    {% if head %}
+        {{ head|escape }}
+    {% endif %}
+</head>
+
+{% if body %}
+    {{ body|escape }}
+{% endif %}
+
+</html>

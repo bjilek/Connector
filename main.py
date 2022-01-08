@@ -45,8 +45,10 @@ def run_app():
 
 def setup_logger():
     filename = get_log_path()
-    log_handler = logging.handlers.WatchedFileHandler(
+    log_handler = logging.handlers.RotatingFileHandler(
         filename=filename,
+        maxBytes=1000000,
+        backupCount=5
     )
 
     logging.basicConfig(
@@ -82,10 +84,8 @@ def main():
     _logger.info('Closing Connector')
 
 
-setup_logger()
-
-
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     set_config()
+    setup_logger()
     main()

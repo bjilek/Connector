@@ -52,9 +52,12 @@ def url_safe_name(name: str):
     return name.strip().replace(' ', '+') if isinstance(name, str) else name
 
 
-def get_context():
+def get_context(display_id=None):
+    file = f'display_{display_id}.json' \
+        if display_id is not None else 'display.json'
+
     try:
-        ctx = json.load(open(get_user_data('display.json')))
+        ctx = json.load(open(get_user_data(file)))
     except FileNotFoundError:
         ctx = {}
     except Exception as e:
@@ -137,7 +140,7 @@ def set_extra_display(display_id):
 @app.route('/display/<string:display_id>', methods=['GET'])
 def extra_display(display_id):
     try:
-        ctx = get_context()
+        ctx = get_context(display_id)
     except Exception as e:
         return jsonify({'error': e}, status=404)
 

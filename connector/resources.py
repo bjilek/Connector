@@ -15,6 +15,7 @@ def get_user_data_path():
         path = Path(f'~/.local/share/connector/').expanduser()
     elif sys.platform == 'win32':
         path = os.path.expandvars('%LOCALAPPDATA%\\Connector\\')
+        Path(path).mkdir(parents=True, exist_ok=True)
     else:
         path = Path('.')
 

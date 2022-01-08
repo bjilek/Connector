@@ -3,9 +3,14 @@ import sys
 import subprocess
 import logging
 import re
+from uuid import uuid4
+from shutil import which
 
 if sys.platform == 'win32':
     import win32print
+    import win32api
+
+from .resources import get_user_data, get_user_data_path, resource_path
 
 _logger = logging.getLogger(__name__)
 
@@ -50,27 +55,60 @@ def get_default_printer():
     return default_printer
 
 
-def print_to(name, file):
-    name = clean_printer_name(name)
-    with open('tmp_file.pdf', 'wb') as f:
-        f.write(file)
+def print_to(printername, file):
+    name = clean_printer_name(printername)
 
-        if sys.platform in ['linux', 'darwin']:
-            args = ['lpr', '-P', f'{name}', 'tmp_file.pdf']
-        elif sys.platform == 'win32':
-            args = [
-                'gswin64c.exe', '-sDEVICE=mswinpr2', '-dBATCH', '-dNOPAUSE',
-                '-dFitPage', f'-sOutputFile="%printer%{name}"', 'tmp_file.pdf'
-            ]
-        else:
-            raise NotImplementedError('Platform not supported')
+    filepath = get_user_data(
+        f'tmp_{str(uuid4())[:8]}.pdf'
+    ).absolute()
 
-        try:
-            subprocess.check_output(args)
-        except subprocess.CalledProcessError as e:
-            _logger.error(e)
-        except Exception as e:
-            _logger.error(e)
-            raise e
+    try:
+        with open(filepath, 'wb') as f:
+            f.write(file)
 
-    os.remove('tmp_file.pdf')
+            if sys.platform in ['linux', 'darwin']:
+                print_unix(name, filepath)
+            elif sys.platform == 'win32':
+                print_win(name, filepath)
+            else:
+                raise NotImplementedError('Platform not supported')
+    except Exception as e:
+        _logger.error(e)
+    finally:
+        os.remove(filepath)
+
+
+def print_unix(printername, filepath):
+    args = ['lpr', '-P', f'{printername}', filepath]
+    subprocess.check_output(args)
+
+
+def print_win(printername, filepath):
+    if which('gswin64c.exe') is not None:
+        print_win_gs('gswin64c.exe', printername, filepath)
+    elif which('gswin32c.exe') is not None:
+        print_win_gs('gswin32c.exe', printername, filepath)
+    else:
+        print_win_shell(printername, filepath)
+
+
+def print_win_gs(exe, printername, filepath):
+    args = [
+        exe, '-sDEVICE=mswinpr2', '-dBATCH', '-dNOPAUSE',
+        '-dFitPage', f'-sOutputFile="%printer%{printername}"', filepath
+    ]
+
+    subprocess.check_output(args)
+
+
+def print_win_shell(printername, filepath):
+    filename = str(filepath).split('\\')[-1]
+
+    win32api.ShellExecute(
+        0, 'print', filename, f'/d:{printername}', get_user_data_path(), 0
+    )
+
+
+def test_print(printer_name):
+    file = open(str(resource_path('testpage.pdf')), 'rb').read()
+    print_to(printer_name, file)

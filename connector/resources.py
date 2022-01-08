@@ -22,16 +22,16 @@ def get_user_data_path():
     return path
 
 
-def get_user_data(path):
-    return Path(get_user_data_path(), path)
+def get_user_data(filename):
+    return Path(get_user_data_path(), filename)
 
 
 def get_config_path():
-    return Path(get_user_data_path(), 'config.json')
+    return get_user_data('config.json')
 
 
 def get_log_path():
-    return Path(get_user_data_path(), 'connector.log')
+    return get_user_data('connector.log')
 
 
 def set_config():

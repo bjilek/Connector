@@ -84,8 +84,9 @@ def main():
     _logger.info('Closing Connector')
 
 
+setup_logger()
+
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     set_config()
-    setup_logger()
     main()

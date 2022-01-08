@@ -1,9 +1,9 @@
 import logging
 import json
 
-from flask import Flask, request, Response, jsonify, render_template
+from flask import Flask, request, Response, jsonify, render_template, redirect
 
-from .printer import list_printer, get_default_printer, print_to
+from .printer import list_printer, get_default_printer, print_to, test_print
 from .resources import get_user_data
 
 _logger = logging.getLogger()
@@ -67,6 +67,28 @@ def get_context(display_id=None):
     return ctx
 
 
+def _set_display(display_id=None):
+    filename = f'display_{display_id}.json' if display_id else 'display.json'
+    file = get_user_data(filename)
+
+    error = None
+    status = 200
+
+    try:
+        with open(file, 'w') as context:
+            json.dump(request.data, context, indent=4)
+    except json.JSONDecodeError as e:
+        _logger.error(e)
+        error = e
+        status = 400
+    except Exception as e:
+        _logger.error(e)
+        error = e
+        status = 500
+
+    return error, status
+
+
 @app.route("/")
 def printer():
     printer_list = list_printer()
@@ -76,6 +98,18 @@ def printer():
     )
 
 
+@app.route('/testprint/<string:printer_name>', methods=['GET'])
+def print_testpage(printer_name):
+    printer_name = clean_printer_name(printer_name)
+    _logger.info(f'Sending test print job to {printer_name}')
+    try:
+        test_print(printer_name)
+    except Exception as e:
+        _logger.error(e)
+
+    return redirect('/')
+
+
 @app.route('/api/v1/print', methods=['POST'])
 def print_to_default():
     printer_name = get_default_printer()
@@ -83,8 +117,10 @@ def print_to_default():
     if printer_name is None:
         return jsonify({'error': 'No default printer set'}, status=500)
 
+    return Response(status=200)
 
-@app.route("/api/v1/print/<string:printer>", methods=['POST'])
+
+@app.route("/api/v1/print/<string:printer_name>", methods=['POST'])
 def print_file(printer_name):
     printer_name = clean_printer_name(printer_name)
     _logger.info(f'Sending print job to {printer_name}')
@@ -113,10 +149,22 @@ def get_default_printer_name():
 
 @app.route('/api/v1/set_display', methods=['POST'])
 def set_display():
-    file = get_user_data('display.json')
+    error, status = _set_display()
 
-    with open(file, 'w') as context:
-        json.dump(request.data, context, indent=4)
+    if error:
+        return jsonify({'error': error}, status=status)
+
+    return Response(status=status)
+
+
+@app.route('/api/v1/set_display/<string:display_id>', methods=['POST'])
+def set_extra_display(display_id):
+    error, status = _set_display(display_id)
+
+    if error:
+        return jsonify({'error': error}, status=status)
+
+    return Response(status=status)
 
 
 @app.route('/display', methods=['GET'])
@@ -127,14 +175,6 @@ def display():
         return jsonify({'error': e}, status=404)
 
     return render_template('display.html', **ctx)
-
-
-@app.route('/api/v1/set_display/<string:display_id>', methods=['POST'])
-def set_extra_display(display_id):
-    file = get_user_data(f'display_{display_id}.json')
-
-    with open(file, 'w') as context:
-        json.dump(request.data, context, indent=4)
 
 
 @app.route('/display/<string:display_id>', methods=['GET'])

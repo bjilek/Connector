@@ -8,10 +8,12 @@
                     <table id="main-content-list" class="table is-narrow is-hoverable is-fullwidth">
                         <tr>
                             <th>Available Printer</th>
+                            <th></th>
                         </tr>
                         {% for printer in printer_list %}
                             <tr>
                                 <td>{{ printer }}</td>
+                                <td><a class="button is-small" href="{{ url_for('print_testpage', printer_name=printer) }}">Testprint</a></td>
                             </tr>
                         {% endfor %}
                     </table>

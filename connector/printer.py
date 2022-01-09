@@ -110,5 +110,5 @@ def print_win_shell(printername, filepath):
 
 
 def test_print(printer_name):
-    file = open(str(resource_path('testpage.pdf')), 'rb').read()
-    print_to(printer_name, file)
+    with open(str(resource_path('testpage.pdf')), 'rb') as file:
+        print_to(printer_name, file.read())

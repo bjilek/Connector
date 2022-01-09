@@ -10,7 +10,9 @@ if sys.platform == 'win32':
     import win32print
     import win32api
 
-from .resources import get_user_data, get_user_data_path, resource_path
+from .resources import (
+    get_user_data, get_user_data_path, resource_path, get_config
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -84,12 +86,17 @@ def print_unix(printername, filepath):
 
 
 def print_win(printername, filepath):
-    if which('gswin64c.exe') is not None:
-        print_win_gs('gswin64c.exe', printername, filepath)
-    elif which('gswin32c.exe') is not None:
-        print_win_gs('gswin32c.exe', printername, filepath)
+    config = get_config()
+
+    if config.get('GS_PATH'):
+        print_win_gs(config.get('GS_PATH'), printername, filepath)
     else:
-        print_win_shell(printername, filepath)
+        if which('gswin64c.exe') is not None:
+            print_win_gs('gswin64c.exe', printername, filepath)
+        elif which('gswin32c.exe') is not None:
+            print_win_gs('gswin32c.exe', printername, filepath)
+        else:
+            print_win_shell(printername, filepath)
 
 
 def print_win_gs(exe, printername, filepath):

@@ -23,9 +23,9 @@ def list_printer():
     printer_list = []
     if sys.platform in ['linux', 'darwin']:
         try:
-            printer = subprocess.check_output(['lpstat', '-p']).decode()
+            printer = subprocess.check_output(['lpstat', '-a']).decode()
             printer_list.extend([p for p in printer.splitlines()])
-            printer_list = [p.split(' ')[1] for p in printer_list]
+            printer_list = [p.split(' ')[0] for p in printer_list]
         except subprocess.CalledProcessError as e:
             _logger.error(e)
     elif sys.platform == 'win32':

@@ -1,8 +1,10 @@
+import datetime
 import os
 import sys
 import subprocess
 import logging
 import re
+import time
 from uuid import uuid4
 from shutil import which
 
@@ -114,6 +116,8 @@ def print_win_shell(printername, filepath):
     win32api.ShellExecute(
         0, 'print', filename, f'/d:{printername}', get_user_data_path(), 0
     )
+
+    time.sleep(get_config().get('SHELLEXECUTE_TIMEOUT', .5))
 
 
 def test_print(printer_name):

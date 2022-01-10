@@ -1,4 +1,3 @@
-import datetime
 import os
 import sys
 import subprocess
@@ -93,15 +92,19 @@ def print_win(printername, filepath):
     if config.get('GS_PATH'):
         print_win_gs(config.get('GS_PATH'), printername, filepath)
     else:
+        print_win_shell(printername, filepath)
         if which('gswin64c.exe') is not None:
             print_win_gs('gswin64c.exe', printername, filepath)
         elif which('gswin32c.exe') is not None:
             print_win_gs('gswin32c.exe', printername, filepath)
+        elif os.path.isfile(resource_path('gswin64c.exe')):
+            print_win_gs(resource_path('gswin64c.exe'), printername, filepath)
         else:
             print_win_shell(printername, filepath)
 
 
 def print_win_gs(exe, printername, filepath):
+    _logger.info(f'Printing with provider {exe}')
     args = [
         exe, '-sDEVICE=mswinpr2', '-dBATCH', '-dNOPAUSE',
         '-dFitPage', f'-sOutputFile="%printer%{printername}"', filepath
@@ -111,15 +114,16 @@ def print_win_gs(exe, printername, filepath):
 
 
 def print_win_shell(printername, filepath):
+    _logger.info(f'Printing with provider ShellExecute')
     filename = str(filepath).split('\\')[-1]
 
     win32api.ShellExecute(
         0, 'print', filename, f'/d:{printername}', get_user_data_path(), 0
     )
 
-    time.sleep(get_config().get('SHELLEXECUTE_TIMEOUT', .5))
+    time.sleep(get_config().get('SHELLEXECUTE_TIMEOUT', 1))
 
 
 def test_print(printer_name):
-    with open(str(resource_path('testpage.pdf')), 'rb') as file:
+    with open(resource_path('testpage.pdf'), 'rb') as file:
         print_to(printer_name, file.read())

@@ -111,6 +111,7 @@ def main():
     terminate_server(server)
     _logger.info('Connector terminated')
 
+
 setup_logger()
 
 if __name__ == '__main__':

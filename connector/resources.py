@@ -28,7 +28,7 @@ def binary_update_file_name():
 
 
 def update_url():
-    file_extension = '.exe' if sys.platform == 'win32' else ''
+    file_extension = '_win.exe' if sys.platform == 'win32' else '_linux'
     return get_config()['UPDATE_URL'] + file_extension
 
 

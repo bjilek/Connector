@@ -92,7 +92,6 @@ def print_win(printername, filepath):
     if config.get('GS_PATH'):
         print_win_gs(config.get('GS_PATH'), printername, filepath)
     else:
-        print_win_shell(printername, filepath)
         if which('gswin64c.exe') is not None:
             print_win_gs('gswin64c.exe', printername, filepath)
         elif which('gswin32c.exe') is not None:

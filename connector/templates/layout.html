@@ -13,8 +13,9 @@
 {% block navbar %}
     <nav class="navbar is-success is-fixed-top" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
-            <a class="navbar-item" href="{{ url_for('printer') }}">Printer</a>
+            <a class="navbar-item" href="{{ url_for('available_printer') }}">Printer</a>
             <a class="navbar-item" href="{{ url_for('display') }}">Display</a>
+            <a class="navbar-item" href="{{ url_for('update') }}">Update</a>
         </div>
     </nav>
 {% endblock %}

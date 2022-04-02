@@ -2,12 +2,13 @@ import time
 import multiprocessing
 import traceback
 import logging
+import os
+import sys
 from logging import handlers
 from waitress import serve
 
 from connector.server import app
-from connector.resources import set_config, get_config, get_log_path
-from connector.systemtray import build_icon
+from connector import resources
 
 _logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class Process(multiprocessing.Process):
 
 
 def run_app():
-    app.config.update(get_config())
+    app.config.update(resources.get_config())
     _logger.info(
         'Starting Connector with allowed origins: '
         f'{app.config["ALLOWED_ORIGINS"]}'
@@ -44,7 +45,7 @@ def run_app():
 
 
 def setup_logger():
-    filename = get_log_path()
+    filename = resources.get_log_path()
     log_handler = logging.handlers.RotatingFileHandler(
         filename=filename,
         maxBytes=1000000,
@@ -64,9 +65,26 @@ def terminate_server(server):
     server.join()
 
 
-def run_icon():
-    icon = build_icon()
-    icon.run()
+def update():
+    _logger.info('Updating connector')
+
+    try:
+        resources.download_update()
+        resources.switch_binary()
+    except Exception as e:
+        _logger.error(e)
+    finally:
+        resources.delete_update_file()
+
+    _logger.info('Connector update completed')
+
+    return True
+
+
+def restart_program():
+    _logger.info('Restarting connector')
+    os.execl(sys.executable, os.path.abspath(__file__), *sys.argv)
+    sys.exit(0)
 
 
 def main():
@@ -77,16 +95,20 @@ def main():
     if server.exception:
         error, traceback = server.exception
         _logger.error(traceback)
-    else:
-        run_icon()
+
+    while not time.sleep(5):
+        if resources.is_binary() and resources.update_file_exists():
+            update()
+            terminate_server(server)
+            restart_program()
 
     terminate_server(server)
-    _logger.info('Closing Connector')
+    _logger.info('Connector terminated')
 
 
 setup_logger()
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-    set_config()
+    resources.set_config()
     main()

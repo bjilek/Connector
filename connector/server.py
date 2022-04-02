@@ -3,8 +3,8 @@ import json
 
 from flask import Flask, request, Response, jsonify, render_template, redirect
 
-from .printer import list_printer, get_default_printer, print_to, test_print
-from .resources import get_user_data
+from . import printer
+from . import resources
 
 _logger = logging.getLogger()
 
@@ -57,7 +57,7 @@ def get_context(display_id=None):
         if display_id is not None else 'display.json'
 
     try:
-        ctx = json.load(open(get_user_data(file)))
+        ctx = json.load(open(resources.get_user_data(file)))
     except FileNotFoundError:
         ctx = {}
     except Exception as e:
@@ -69,7 +69,7 @@ def get_context(display_id=None):
 
 def _set_display(display_id=None):
     filename = f'display_{display_id}.json' if display_id else 'display.json'
-    file = get_user_data(filename)
+    file = resources.get_user_data(filename)
 
     error = None
     status = 200
@@ -90,8 +90,8 @@ def _set_display(display_id=None):
 
 
 @app.route("/")
-def printer():
-    printer_list = list_printer()
+def available_printer():
+    printer_list = printer.list_printer()
 
     return render_template(
         'printer_list.html', **{'printer_list': printer_list}
@@ -103,7 +103,7 @@ def print_testpage(printer_name):
     printer_name = clean_printer_name(printer_name)
     _logger.info(f'Sending test print job to {printer_name}')
     try:
-        test_print(printer_name)
+        printer.test_print(printer_name)
     except Exception as e:
         _logger.error(e)
 
@@ -112,7 +112,7 @@ def print_testpage(printer_name):
 
 @app.route('/api/v1/print', methods=['POST'])
 def print_to_default():
-    printer_name = get_default_printer()
+    printer_name = printer.get_default_printer()
 
     if printer_name is None:
         return jsonify({'error': 'No default printer set'}, status=500)
@@ -126,7 +126,7 @@ def print_file(printer_name):
     _logger.info(f'Sending print job to {printer_name}')
 
     try:
-        print_to(printer_name, request.data)
+        printer.print_to(printer_name, request.data)
     except Exception as e:
         _logger.error(e)
         return jsonify({'error': e}, status=500)
@@ -137,14 +137,17 @@ def print_file(printer_name):
 @app.route('/api/v1/list_printer', methods=['GET'])
 def get_printer_names():
     return jsonify({
-        'printer': [url_safe_name(p) for p in list_printer()],
-        'default': url_safe_name(get_default_printer())
+        'printer': [url_safe_name(p) for p in printer.list_printer()],
+        'default': url_safe_name(printer.get_default_printer())
     })
 
 
 @app.route('/api/v1/default_printer', methods=['GET'])
 def get_default_printer_name():
-    return jsonify({'default_printer': url_safe_name(get_default_printer())})
+    return jsonify({
+        'default_printer': url_safe_name(
+            printer.get_default_printer()
+        )})
 
 
 @app.route('/api/v1/set_display', methods=['POST'])
@@ -185,3 +188,13 @@ def extra_display(display_id):
         return jsonify({'error': e}, status=404)
 
     return render_template('display.html', **ctx)
+
+
+@app.route('/update', methods=['GET'])
+def update():
+    try:
+        resources.create_update_file()
+    except Exception as e:
+        return jsonify({'error': e}, status=500)
+
+    return Response(status=200)

@@ -18,6 +18,7 @@ dist/
 
 # Package files
 *.jar
+connector.spec
 
 # Maven
 target/
@@ -39,7 +40,7 @@ Thumbs.db
 *.exe
 *.war
 
-/build
+build/
 
 # Large media files
 *.mp4

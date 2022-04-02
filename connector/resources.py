@@ -1,5 +1,6 @@
 import sys
 import os
+import stat
 import json
 import requests
 from pathlib import Path
@@ -16,21 +17,11 @@ def resource_path(relative_path):
 
 
 def binary_file_name():
-    return 'connector.exe' if sys.platform == 'win32' else 'connector'
+    return sys.executable
 
 
 def binary_update_file_name():
     return binary_file_name() + '.update'
-
-
-def binary_file_path():
-    filename = binary_file_name()
-    return resource_path(filename)
-
-
-def binary_update_file_path():
-    filename = binary_update_file_name()
-    return resource_path(filename)
 
 
 def update_url():
@@ -71,8 +62,8 @@ def set_config():
                 'ALLOWED_ORIGINS': ['*'],
                 'CONNECTOR_PORT': 5050,
                 'UPDATE_URL':
-                    'https://www.github.com/bjilek/connector/'
-                    'archive/refs/tags/latest'
+                    'https://github.com/bjilek/Connector/'
+                    'releases/download/latest/connector'
             }, f, indent=4)
 
 
@@ -117,8 +108,10 @@ def download_update():
 
 
 def switch_binary():
-    old_binary = binary_file_path()
-    new_binary = binary_update_file_path()
-    os.rename(old_binary, old_binary + '.old')
-    os.rename(new_binary, old_binary)
-    os.remove(old_binary + '.old')
+    old_binary = binary_file_name()
+    new_binary = binary_update_file_name()
+    if os.path.isfile(old_binary) and os.path.isfile(new_binary):
+        os.rename(old_binary, old_binary + '.old')
+        os.rename(new_binary, old_binary)
+        os.remove(old_binary + '.old')
+        os.chmod(old_binary, stat.S_IRWXU)

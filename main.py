@@ -87,7 +87,13 @@ def restart_program():
     sys.exit(0)
 
 
+def cleanup():
+    resources.delete_update_file()
+    resources.delete_old_binary()
+
+
 def main():
+    cleanup()
     server = Process(name='connector', target=run_app)
     server.start()
     time.sleep(1)
@@ -104,7 +110,6 @@ def main():
 
     terminate_server(server)
     _logger.info('Connector terminated')
-
 
 setup_logger()
 

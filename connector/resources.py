@@ -3,7 +3,10 @@ import os
 import stat
 import json
 import requests
+import logging
 from pathlib import Path
+
+_logger = logging.getLogger()
 
 
 def is_binary():
@@ -25,7 +28,8 @@ def binary_update_file_name():
 
 
 def update_url():
-    return get_config()['UPDATE_URL']
+    file_extension = '.exe' if sys.platform == 'win32' else ''
+    return get_config()['UPDATE_URL'] + file_extension
 
 
 def get_user_data_path():
@@ -107,11 +111,16 @@ def download_update():
     return resource_path(filename)
 
 
+def delete_old_binary():
+    filename = binary_file_name() + '.old'
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+
 def switch_binary():
     old_binary = binary_file_name()
     new_binary = binary_update_file_name()
     if os.path.isfile(old_binary) and os.path.isfile(new_binary):
         os.rename(old_binary, old_binary + '.old')
         os.rename(new_binary, old_binary)
-        os.remove(old_binary + '.old')
         os.chmod(old_binary, stat.S_IRWXU)

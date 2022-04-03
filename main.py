@@ -4,6 +4,8 @@ import traceback
 import logging
 import os
 import sys
+import argparse
+import webbrowser
 from logging import handlers
 from waitress import serve
 
@@ -32,6 +34,17 @@ class Process(multiprocessing.Process):
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-o', '--open-browser',
+        help='Opens a browser window to show the application',
+        action='store_true'
+    )
+    args = parser.parse_args()
+    return args
 
 
 def run_app():
@@ -94,6 +107,7 @@ def cleanup():
 
 def main():
     cleanup()
+    args = parse_args()
     server = Process(name='connector', target=run_app)
     server.start()
     time.sleep(1)
@@ -101,6 +115,10 @@ def main():
     if server.exception:
         error, traceback = server.exception
         _logger.error(traceback)
+
+    if args.open_browser:
+        port = resources.get_config()['CONNECTOR_PORT']
+        webbrowser.open(f'http://localhost:{port}', new=1)
 
     while not time.sleep(5):
         if resources.is_binary() and resources.update_file_exists():

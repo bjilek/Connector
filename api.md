@@ -27,5 +27,5 @@ fetch('http://localhost:5050/api/v1/list_printer')
 ```
 Response:
 ```
-{"data":{"default":"Printer2","printer":["Printer1", "Printer2"]}}
+{"data":{"default":"Printer2","printer":["Printer1", "Printer2", "Printer3"]}}
 ```

@@ -102,6 +102,7 @@ def available_printer():
 def print_testpage(printer_name):
     printer_name = clean_printer_name(printer_name)
     _logger.info(f'Sending test print job to {printer_name}')
+
     try:
         printer.test_print(printer_name)
     except Exception as e:
@@ -115,7 +116,10 @@ def print_to_default():
     printer_name = printer.get_default_printer()
 
     if printer_name is None:
-        return jsonify({'error': 'No default printer set'}, status=500)
+        return jsonify(data={'error': 'No default printer set'}, status=500)
+
+    _logger.info(f'Sending print job to {printer_name}')
+    printer.print_to(printer_name, request.data)
 
     return Response(status=200)
 
@@ -129,25 +133,28 @@ def print_file(printer_name):
         printer.print_to(printer_name, request.data)
     except Exception as e:
         _logger.error(e)
-        return jsonify({'error': e}, status=500)
+        return jsonify(data={'error': e}, status=500)
 
     return Response(status=200)
 
 
 @app.route('/api/v1/list_printer', methods=['GET'])
 def get_printer_names():
-    return jsonify({
-        'printer': [url_safe_name(p) for p in printer.list_printer()],
-        'default': url_safe_name(printer.get_default_printer())
-    })
+    return jsonify(
+        data={
+            'printer': [url_safe_name(p) for p in printer.list_printer()],
+            'default': url_safe_name(printer.get_default_printer())
+        }
+    )
 
 
 @app.route('/api/v1/default_printer', methods=['GET'])
 def get_default_printer_name():
-    return jsonify({
-        'default_printer': url_safe_name(
-            printer.get_default_printer()
-        )})
+    return jsonify(
+        data={
+            'default_printer': url_safe_name(printer.get_default_printer())
+        }
+    )
 
 
 @app.route('/api/v1/set_display', methods=['POST'])
@@ -155,7 +162,7 @@ def set_display():
     error, status = _set_display()
 
     if error:
-        return jsonify({'error': error}, status=status)
+        return jsonify(data={'error': error}, status=status)
 
     return Response(status=status)
 
@@ -165,7 +172,7 @@ def set_extra_display(display_id):
     error, status = _set_display(display_id)
 
     if error:
-        return jsonify({'error': error}, status=status)
+        return jsonify(data={'error': error}, status=status)
 
     return Response(status=status)
 
@@ -175,7 +182,7 @@ def display():
     try:
         ctx = get_context()
     except Exception as e:
-        return jsonify({'error': e}, status=404)
+        return jsonify(data={'error': e}, status=404)
 
     return render_template('display.html', **ctx)
 
@@ -185,7 +192,7 @@ def extra_display(display_id):
     try:
         ctx = get_context(display_id)
     except Exception as e:
-        return jsonify({'error': e}, status=404)
+        return jsonify(data={'error': e}, status=404)
 
     return render_template('display.html', **ctx)
 
@@ -195,6 +202,6 @@ def update():
     try:
         resources.create_update_file()
     except Exception as e:
-        return jsonify({'error': e}, status=500)
+        return jsonify(data={'error': e}, status=500)
 
     return Response(status=200)

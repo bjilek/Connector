@@ -45,7 +45,7 @@ def get_default_printer():
             default_printer = subprocess.check_output(
                 ['lpstat', '-d']).decode().strip()
             if ':' in default_printer:
-                default_printer = default_printer.split(' ')[2]
+                default_printer = default_printer.split(' ')[-1]
             else:
                 default_printer = None
         except subprocess.CalledProcessError as e:
@@ -69,20 +69,21 @@ def print_to(printername, file):
         with open(filepath, 'wb') as f:
             f.write(file)
 
-            if sys.platform in ['linux', 'darwin']:
-                print_unix(name, filepath)
-            elif sys.platform == 'win32':
-                print_win(name, filepath)
-            else:
-                raise NotImplementedError('Platform not supported')
+        if sys.platform in ['linux', 'darwin']:
+            print_unix(name, filepath)
+        elif sys.platform == 'win32':
+            print_win(name, filepath)
+        else:
+            raise NotImplementedError('Platform not supported')
     except Exception as e:
         _logger.error(e)
     finally:
-        os.remove(filepath)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
 
 def print_unix(printername, filepath):
-    args = ['lpr', '-P', f'{printername}', filepath]
+    args = ['lpr', '-P', f'{printername}', str(filepath)]
     subprocess.check_output(args)
 
 

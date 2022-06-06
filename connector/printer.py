@@ -98,10 +98,11 @@ def print_win(printername, filepath):
 
 
 def print_win_gs(exe, printername, filepath):
-    _logger.info(f'Printing with provider {exe}')
+    _logger.info(f'Printing to {printername} with provider {exe}')
+
     args = [
         exe, '-sDEVICE=mswinpr2', '-dBATCH', '-dNOPAUSE',
-        '-dFitPage', f'-sOutputFile="%printer%{printername}"', filepath
+        '-dFitPage', f'-sOutputFile=%printer%{printername}', filepath
     ]
 
     subprocess.check_output(args)

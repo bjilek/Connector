@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import logging
-import re
 import time
 from uuid import uuid4
 from shutil import which
@@ -16,10 +15,6 @@ from .resources import (
 )
 
 _logger = logging.getLogger(__name__)
-
-
-def clean_printer_name(name):
-    return re.sub(r'[\>\<\|\&]', '', name)
 
 
 def list_printer():
@@ -58,9 +53,7 @@ def get_default_printer():
     return default_printer
 
 
-def print_to(printername, file):
-    name = clean_printer_name(printername)
-
+def print_to(printer_name, file):
     filepath = get_user_data(
         f'tmp_{str(uuid4())[:8]}.pdf'
     ).absolute()
@@ -70,9 +63,9 @@ def print_to(printername, file):
             f.write(file)
 
         if sys.platform in ['linux', 'darwin']:
-            print_unix(name, filepath)
+            print_unix(printer_name, filepath)
         elif sys.platform == 'win32':
-            print_win(name, filepath)
+            print_win(printer_name, filepath)
         else:
             raise NotImplementedError('Platform not supported')
     except Exception as e:
@@ -82,8 +75,9 @@ def print_to(printername, file):
             os.remove(filepath)
 
 
-def print_unix(printername, filepath):
-    args = ['lpr', '-P', f'{printername}', str(filepath)]
+def print_unix(printer_name, filepath):
+    _logger.info(f'Printing with provider lpr')
+    args = ['lpr', '-o', 'noPdfAutoRotate', '-P', f'{printer_name}', str(filepath)]
     subprocess.check_output(args)
 
 
@@ -124,6 +118,7 @@ def print_win_shell(printername, filepath):
     time.sleep(get_config().get('SHELLEXECUTE_TIMEOUT', 1))
 
 
-def test_print(printer_name):
-    with open(resource_path('testpage.pdf'), 'rb') as file:
+def test_print(page_format, printer_name):
+    file_name = f'testpage_{page_format}.pdf'
+    with open(resource_path(file_name), 'rb') as file:
         print_to(printer_name, file.read())

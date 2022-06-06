@@ -7,13 +7,15 @@
                 <div class="container box is-fluid p-2">
                     <table id="main-content-list" class="table is-narrow is-hoverable is-fullwidth">
                         <tr>
-                            <th>Available Printer</th>
+                            <th style="min-width: 80%">Available Printer</th>
+                            <th></th>
                             <th></th>
                         </tr>
                         {% for printer in printer_list %}
                             <tr>
                                 <td>{{ printer }}</td>
-                                <td><a class="button is-small" href="{{ url_for('print_testpage', printer_name=printer) }}">Testprint</a></td>
+                                <td><a class="button is-small" href="{{ url_for('print_testpage', page_format='bon_80', printer_name=printer) }}">Testprint Bon 80</a></td>
+                                <td><a class="button is-small" href="{{ url_for('print_testpage', page_format='a4', printer_name=printer) }}">Testprint A4</a></td>
                             </tr>
                         {% endfor %}
                     </table>

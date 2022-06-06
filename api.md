@@ -4,7 +4,7 @@
 ```
 fetch('http://localhost:5050/api/v1/print', {
     method: 'POST',
-    body: pdf_blob,
+    body: JSON.stringify({pdf: pdfFile}),  # Base64 encoded PDF
     headers: {
         'Content-Type': 'application/json'
 }
@@ -14,7 +14,7 @@ fetch('http://localhost:5050/api/v1/print', {
 ```
 fetch('http://localhost:5050/api/v1/print/printer+name', {
     method: 'POST',
-    body: pdf_blob,
+    body: JSON.stringify({pdf: pdfFile, printer: 'Name of the Printer'}),
     headers: {
         'Content-Type': 'application/json'
 }

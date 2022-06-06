@@ -1,6 +1,7 @@
 import logging
 import json
 
+from base64 import b64decode
 from flask import Flask, request, Response, jsonify, render_template, redirect
 
 from . import printer
@@ -42,14 +43,6 @@ def after_request(response):
 
 def get_allowed_origins():
     return app.config.get('ALLOWED_ORIGINS', [])
-
-
-def clean_printer_name(name: str):
-    return name.replace('+', ' ')
-
-
-def url_safe_name(name: str):
-    return name.strip().replace(' ', '+') if isinstance(name, str) else name
 
 
 def get_context(display_id=None):
@@ -98,13 +91,12 @@ def available_printer():
     )
 
 
-@app.route('/testprint/<string:printer_name>', methods=['GET'])
-def print_testpage(printer_name):
-    printer_name = clean_printer_name(printer_name)
-    _logger.info(f'Sending test print job to {printer_name}')
+@app.route('/testprint/<string:page_format>/<string:printer_name>', methods=['GET'])
+def print_testpage(page_format, printer_name):
+    _logger.info(f'Sending test print job {page_format} to {printer_name}')
 
     try:
-        printer.test_print(printer_name)
+        printer.test_print(page_format, printer_name)
     except Exception as e:
         _logger.error(e)
 
@@ -112,47 +104,37 @@ def print_testpage(printer_name):
 
 
 @app.route('/api/v1/print', methods=['POST'])
-def print_to_default():
-    printer_name = printer.get_default_printer()
+def printing():
+    data = request.get_json()
+    response = {}
+    status = 200
+    printer_name = data.get('printer')
 
-    if printer_name is None:
-        return jsonify(data={'error': 'No default printer set'}, status=500)
+    if not printer_name:
+        printer_name = printer.get_default_printer()
 
-    _logger.info(f'Sending print job to {printer_name}')
-    printer.print_to(printer_name, request.data)
+    print_data = data.get('pdf')
 
-    return Response(status=200)
+    if print_data:
+        try:
+            printer.print_to(printer_name, b64decode(print_data))
+        except Exception as e:
+            _logger.error(e)
+            response.update({'error': e})
+            status = 500
+    else:
+        status = 400
+        response.update({'error': 'Nothing to print.'})
 
-
-@app.route("/api/v1/print/<string:printer_name>", methods=['POST'])
-def print_file(printer_name):
-    printer_name = clean_printer_name(printer_name)
-    _logger.info(f'Sending print job to {printer_name}')
-
-    try:
-        printer.print_to(printer_name, request.data)
-    except Exception as e:
-        _logger.error(e)
-        return jsonify(data={'error': e}, status=500)
-
-    return Response(status=200)
+    return jsonify(data=response, status=status)
 
 
 @app.route('/api/v1/list_printer', methods=['GET'])
 def get_printer_names():
     return jsonify(
         data={
-            'printer': [url_safe_name(p) for p in printer.list_printer()],
-            'default': url_safe_name(printer.get_default_printer())
-        }
-    )
-
-
-@app.route('/api/v1/default_printer', methods=['GET'])
-def get_default_printer_name():
-    return jsonify(
-        data={
-            'default_printer': url_safe_name(printer.get_default_printer())
+            'printer': printer.list_printer(),
+            'default': printer.get_default_printer()
         }
     )
 

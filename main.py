@@ -12,6 +12,8 @@ from waitress import serve
 from connector.server import app
 from connector import resources
 
+VERSION = '0.3.0'
+
 _logger = logging.getLogger(__name__)
 
 
@@ -84,28 +86,36 @@ def update():
     try:
         resources.download_update()
         resources.switch_binary()
+        _logger.info('Connector update completed')
     except Exception as e:
+        _logger.error('Error while updating')
         _logger.error(e)
     finally:
-        resources.delete_update_file()
-
-    _logger.info('Connector update completed')
-
-    return True
+        resources.delete_user_data('update')
 
 
 def restart_program():
     _logger.info('Restarting connector')
-    os.execl(sys.executable, os.path.abspath(__file__), *sys.argv)
+    os.spawnl(os.P_NOWAIT, sys.executable, *sys.argv)
     sys.exit(0)
 
 
 def cleanup():
-    resources.delete_update_file()
+    resources.delete_user_data('update')
     resources.delete_old_binary()
+    resources.delete_user_data('restart')
 
 
 def main():
+    multiprocessing.freeze_support()
+    resources.set_config({
+        'VERSION': VERSION,
+        'ALLOWED_ORIGINS': ['*'],
+        'CONNECTOR_PORT': 5050,
+        'UPDATE_URL':
+            'https://github.com/bjilek/Connector/'
+            'releases/download/latest/connector'
+    })
     cleanup()
     args = parse_args()
     server = Process(name='connector', target=run_app)
@@ -113,8 +123,8 @@ def main():
     time.sleep(1)
 
     if server.exception:
-        error, traceback = server.exception
-        _logger.error(traceback)
+        error, trace_back = server.exception
+        _logger.error(trace_back)
 
     if args.open_browser:
         port = resources.get_config()['CONNECTOR_PORT']
@@ -125,14 +135,15 @@ def main():
             update()
             terminate_server(server)
             restart_program()
-
-    terminate_server(server)
-    _logger.info('Connector terminated')
+            break
+        if resources.user_data_exists('restart'):
+            resources.delete_user_data('restart')
+            terminate_server(server)
+            restart_program()
+            break
 
 
 setup_logger()
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()
-    resources.set_config()
     main()

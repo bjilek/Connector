@@ -181,9 +181,52 @@ def extra_display(display_id):
 
 @app.route('/update', methods=['GET'])
 def update():
+    return render_template('update.html')
+
+
+@app.route('/api/v1/update_full')
+def update_full():
     try:
         resources.create_update_file()
     except Exception as e:
+        return jsonify(data={'error': e}, status=200)
+
+    return jsonify(status=200)
+
+
+@app.route('/api/v1/download_update')
+def start_update():
+    try:
+        resources.download_update()
+    except Exception as e:
         return jsonify(data={'error': e}, status=500)
 
-    return Response(status=200)
+    return jsonify(status=200)
+
+
+@app.route('/api/v1/install_update')
+def install_update():
+    try:
+        resources.switch_binary()
+        resources.switch_binary()
+    except Exception as e:
+        return jsonify(data={'error': e}, status=500)
+
+    return jsonify(status=200)
+
+
+@app.route('/api/v1/restart')
+def restart():
+    try:
+        resources.create_user_data('restart')
+    except Exception as e:
+        return jsonify(data={'error': e}, status=200)
+
+    return jsonify(status=200)
+
+
+@app.route('/api/v1/version')
+def version():
+    return jsonify(
+        data={'version': resources.get_config()['VERSION']}
+    )

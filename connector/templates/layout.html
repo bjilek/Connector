@@ -10,7 +10,7 @@
     <title>Connector</title>
 </head>
 
-<body>
+<body style="background-color: whitesmoke">
 {% block navbar %}
     <nav class="navbar is-success is-fixed-top" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
@@ -20,8 +20,8 @@
         </div>
     </nav>
 {% endblock %}
-    <section class="section px-0 pb-0">
-        <div class="columns m-0">
+    <section class="section px-0 pb-0" style="height: 100vh">
+        <div class="columns m-0" style="height: 100%">
             {% block content %}
             {% endblock %}
         </div>

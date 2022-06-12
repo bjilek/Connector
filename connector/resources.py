@@ -57,18 +57,15 @@ def get_log_path():
     return get_user_data('connector.log')
 
 
-def set_config():
+def set_config(config_values):
     config_path = get_config_path()
 
-    if not os.path.isfile(config_path):
-        with open(config_path, 'w') as f:
-            json.dump({
-                'ALLOWED_ORIGINS': ['*'],
-                'CONNECTOR_PORT': 5050,
-                'UPDATE_URL':
-                    'https://github.com/bjilek/Connector/'
-                    'releases/download/latest/connector'
-            }, f, indent=4)
+    if os.path.isfile(config_path):
+        with open(config_path, 'r') as f:
+            config_values.update(json.load(f))
+
+    with open(config_path, 'w') as f:
+        json.dump(config_values, f, indent=4)
 
 
 def get_config():
@@ -84,19 +81,51 @@ def create_update_file():
     update_file = get_user_data('update')
 
     if not os.path.isfile(update_file):
-        open(update_file, 'a').close()
+        with open(update_file, 'w') as f:
+            f.write('Update queued')
 
 
-def delete_update_file():
+def read_update_file():
     update_file = get_user_data('update')
 
-    if os.path.isfile(update_file):
-        os.remove(update_file)
+    if update_file.is_file():
+        with open(update_file, 'r') as f:
+            return f.read()
+
+    return ''
+
+
+def write_update_file(line):
+    update_file = get_user_data('update')
+
+    if update_file.is_file():
+        with open(update_file, 'w') as f:
+            f.write(line)
 
 
 def update_file_exists():
     update_file = get_user_data('update')
     return os.path.isfile(update_file)
+
+
+def create_user_data(filename):
+    file_path = get_user_data(filename)
+
+    if not os.path.isfile(file_path):
+        open(file_path, 'w').close()
+
+    return file_path
+
+
+def delete_user_data(filename):
+    file_path = get_user_data(filename)
+
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+
+
+def user_data_exists(filename):
+    return os.path.isfile(get_user_data(filename))
 
 
 def download_update():

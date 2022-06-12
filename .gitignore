@@ -39,6 +39,8 @@ Thumbs.db
 *.app
 *.exe
 *.war
+*.dll
+*.iss
 
 build/
 

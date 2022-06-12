@@ -109,7 +109,6 @@ def cleanup():
 def main():
     multiprocessing.freeze_support()
     resources.set_config({
-        'VERSION': VERSION,
         'ALLOWED_ORIGINS': ['*'],
         'CONNECTOR_PORT': 5050,
         'UPDATE_URL':
